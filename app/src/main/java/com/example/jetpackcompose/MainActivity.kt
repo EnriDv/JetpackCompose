@@ -1,4 +1,4 @@
-package com.example.jetpackcompose // Asegúrate que sea tu package name
+package com.example.jetpackcompose
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -31,8 +31,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.jetpackcompose.ui.theme.JetpackComposeTheme // Cambia esto por tu tema
-import com.example.tuproyecto.Screen
+import com.example.jetpackcompose.ui.theme.JetpackComposeTheme
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -40,14 +39,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            JetpackComposeTheme { // Asegúrate que este sea el nombre de tu tema
+            JetpackComposeTheme {
 
                 val navController = rememberNavController()
-                // Observa la ruta actual para saber qué título mostrar
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
-                // Buscamos el título correspondiente a la ruta actual
                 val currentScreen = (Screen.examples + Screen.Home).find { it.route == currentRoute }
 
                 Scaffold(
@@ -58,7 +55,6 @@ class MainActivity : ComponentActivity() {
                                 containerColor = MaterialTheme.colorScheme.primaryContainer
                             ),
                             navigationIcon = {
-                                // Muestra el botón de "atrás" si no estamos en Home
                                 if (currentRoute != Screen.Home.route) {
                                     IconButton(onClick = { navController.navigateUp() }) {
                                         Icon(
@@ -71,31 +67,21 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) { innerPadding ->
-                    // El NavHost es el que se encarga de mostrar la página correcta
                     NavHost(
                         navController = navController,
                         startDestination = Screen.Home.route,
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        // Ruta para la pantalla principal
                         composable(Screen.Home.route) {
                             HomeScreen(navController = navController)
                         }
 
-                        // Registramos todas las rutas de los ejemplos
-                        // Cada una llama a su Composable correspondiente
                         composable(Screen.ColumnExample.route) { ColumnExampleScreen() }
                         composable(Screen.RowExample.route) { RowExampleScreen() }
                         composable(Screen.BoxExample.route) { BoxExampleScreen() }
-                        composable(Screen.SpacerExample.route) { SpacerExampleScreen() }
-                        composable(Screen.SurfaceExample.route) { SurfaceExampleScreen() }
                         composable(Screen.ScaffoldExample.route) { ScaffoldExampleScreen() }
-                        composable(Screen.ConstraintLayoutExample.route) { ConstraintLayoutExampleScreen() }
-                        composable(Screen.LazyColumnExample.route) { LazyColumnExampleScreen() }
                         composable(Screen.LazyRowExample.route) { LazyRowExampleScreen() }
                         composable(Screen.LazyVerticalGridExample.route) { LazyVerticalGridExampleScreen() }
-                        composable(Screen.FlowRowExample.route) { FlowRowExampleScreen() }
-                        composable(Screen.BoxWithConstraintsExample.route) { BoxWithConstraintsExampleScreen() }
                     }
                 }
             }
@@ -109,11 +95,10 @@ class MainActivity : ComponentActivity() {
  */
 @Composable
 fun HomeScreen(navController: NavController) {
-    // Usamos LazyColumn para que la lista sea "scrollable"
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp) // Espacio entre botones
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(Screen.examples) { screen ->
             Button(
