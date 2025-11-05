@@ -11,14 +11,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,6 +48,52 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@Composable
+fun DemoElevatedButton() {
+    ElevatedButton(
+        onClick = { /* Acción */ },
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Text("Guardar Cambios")
+    }
+}
+
+@Composable
+fun DemoOutlinedTextField() {
+    var text = "Enrique"
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = it },
+        label = { Text("Nombre de Usuario") },
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth()
+    )
+}
+
+@Composable
+fun DemoCard() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Notificación Importante",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Este es un contenedor simple.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+
 
 @Composable
 fun Test() {
@@ -68,6 +123,6 @@ fun Test() {
 @Composable
 fun SimpleScaffoldPreview() {
     JetpackComposeTheme {
-        Test()
+        DemoOutlinedTextField()
     }
 }
