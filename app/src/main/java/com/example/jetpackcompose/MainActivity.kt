@@ -1,163 +1,136 @@
-package com.example.jetpackcompose
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.jetpackcompose.ui.theme.JetpackComposeTheme
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            JetpackComposeTheme {
-                BeautyShopListScreen()
-            }
-        }
-    }
+sealed class UiState<out T> {
+    object Loading : UiState<Nothing>()
+    data class Success<out T>(val data: T) : UiState<T>()
+
+    data class Error(val message: String) : UiState<Nothing>()
 }
-
-data class LocalDeBelleza(
-    val nombre: String,
-    val especialidad: String,
-    val rating: Float,
-    val tiempoEspera: String,
-)
-
-val listaDeLocalesHardcodeada = listOf(
-    LocalDeBelleza(
-        nombre = "Salón Divino Glamour",
-        especialidad = "Cortes y Coloración Premium",
-        rating = 4.9f,
-        tiempoEspera = "10 min",
-    ),
-    LocalDeBelleza(
-        nombre = "Barbería Retro",
-        especialidad = "Barba y Estilizado Masculino",
-        rating = 4.7f,
-        tiempoEspera = "20 min",
-    ),
-    LocalDeBelleza(
-        nombre = "Spa de Uñas Cristal",
-        especialidad = "Manicure y Pedicure",
-        rating = 4.5f,
-        tiempoEspera = "5 min",
-    ),
-    LocalDeBelleza(
-        nombre = "Estética Mágica",
-        especialidad = "Tratamientos Faciales y Masajes",
-        rating = 5.0f,
-        tiempoEspera = "30 min",
-    )
-)
 
 @Composable
-fun BeautyShopCard(
-    local: LocalDeBelleza,
-    onActionClick: (LocalDeBelleza) -> Unit
+fun <T> StatefulContentManager(
+    state: UiState<T>,
+    modifier: Modifier = Modifier,
+    onRetry: () -> Unit,
+    onSuccess: @Composable (data: T) -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        onClick = { /* Acción  */ }
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Column {
+        when (state) {
+            is UiState.Loading -> {
+                CircularProgressIndicator()
+            }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = local.nombre,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = local.especialidad,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
+            is UiState.Error -> {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "Rating",
-                        tint = Color(0xFFFFC107),
-                        modifier = Modifier.size(16.dp)
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Error",
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.error
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "${local.rating} (${local.tiempoEspera})",
-                        style = MaterialTheme.typography.bodySmall
+                        text = state.message,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onRetry) {
+                        Text("Reintentar")
+                    }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = { onActionClick(local) },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text("Reservar")
-                }
+            is UiState.Success -> {
+                onSuccess(state.data)
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BeautyShopListScreen() {
+fun StateManagerExampleScreen() {
+
+    var currentState: UiState<String> by remember { mutableStateOf(UiState.Loading) }
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Locales de Belleza") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+        topBar = { TopAppBar(title = { Text("Demo Gestor de Estado") }) }
+    ) { paddingValues ->
+
+        Column(modifier = Modifier.padding(paddingValues)) {
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(onClick = { currentState = UiState.Loading }) { Text("Cargando") }
+                Button(onClick = { currentState = UiState.Success("¡Datos cargados con éxito!") }) { Text("Éxito") }
+                Button(onClick = { currentState = UiState.Error("No se pudo conectar al servidor.") }) { Text("Error") }
+            }
+
+            Divider(modifier = Modifier.padding(vertical = 16.dp))
+
+            StatefulContentManager(
+                state = currentState,
+                onRetry = {
+                    currentState = UiState.Loading
+                },
+                onSuccess = { dataString ->
+                    SuccessContentView(data = dataString)
+                }
             )
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier.padding(paddingValues),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp)
-        ) {
-            items(listaDeLocalesHardcodeada) { local ->
+    }
+}
 
-                BeautyShopCard(
-                    local = local,
-                    onActionClick = { localSeleccionado ->
-                        println("¡Clic en RESERVAR para ${localSeleccionado.nombre}!")
-                    }
-                )
-            }
-        }
+@Composable
+fun SuccessContentView(data: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Contenido de Éxito",
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = data,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color(0xFF006400)
+        )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewBeautyShopListScreen() {
+fun PreviewStateManagerExample() {
     JetpackComposeTheme {
-        BeautyShopListScreen()
+        StateManagerExampleScreen()
     }
 }
