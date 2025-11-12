@@ -1,214 +1,119 @@
-/*
- * Copyright 2025 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.example.compose.snippets.components
-
-import androidx.compose.foundation.layout.Box
+package com.example.jetpackcompose
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Album
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.PlaylistAddCircle
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 
-@Composable
-fun SongsScreen(modifier: Modifier = Modifier) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Songs Screen")
+class MainActivity : ComponentActivity() {
+
+    private val permissionsToRequest = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION, // <-- CAMBIO
+        Manifest.permission.RECORD_AUDIO
+    )
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContent {
+            Scaffold(
+                modifier = Modifier.fillMaxSize()
+            ) { innerPadding ->
+                PermissionScreen(
+                    permissions = permissionsToRequest,
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun AlbumScreen(modifier: Modifier = Modifier) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Album Screen")
-    }
-}
-
-@Composable
-fun PlaylistScreen(modifier: Modifier = Modifier) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Playlist Screen")
-    }
-}
-
-enum class Destination(
-    val route: String,
-    val label: String,
-    val icon: ImageVector,
-    val contentDescription: String
-) {
-    SONGS("songs", "Songs", Icons.Default.MusicNote, "Songs"),
-    ALBUM("album", "Album", Icons.Default.Album, "Album"),
-    PLAYLISTS("playlist", "Playlist", Icons.Default.PlaylistAddCircle, "Playlist")
-}
-
-@Composable
-fun AppNavHost(
-    navController: NavHostController,
-    startDestination: Destination,
+fun PermissionScreen(
+    permissions: Array<String>,
     modifier: Modifier = Modifier
 ) {
-    NavHost(
-        navController,
-        startDestination = startDestination.route
+    var statusText by remember { mutableStateOf("Esperando acción...") }
+    var statusColor by remember { mutableStateOf(Color.Gray) }
+
+    val context = LocalContext.current
+
+    val requestPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissionsMap ->
+
+            // <-- CAMBIO en las variables y lógica
+            val locationGranted = permissionsMap[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+            val audioGranted = permissionsMap[Manifest.permission.RECORD_AUDIO] ?: false
+
+            if (locationGranted && audioGranted) {
+                statusText = "¡Permisos de Ubicación y Micrófono CONCEDIDOS!"
+                statusColor = Color(0xFF006400) // Verde oscuro
+            } else if (locationGranted) {
+                statusText = "Permiso de Ubicación concedido, Micrófono denegado."
+                statusColor = Color(0xFFFFA500) // Naranja
+            } else if (audioGranted) {
+                statusText = "Permiso de Micrófono concedido, Ubicación denegada."
+                statusColor = Color(0xFFFFA500) // Naranja
+            } else {
+                statusText = "¡Permisos DENEGADOS!"
+                statusColor = Color.Red
+            }
+        }
+
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Destination.entries.forEach { destination ->
-            composable(destination.route) {
-                when (destination) {
-                    Destination.SONGS -> SongsScreen()
-                    Destination.ALBUM -> AlbumScreen()
-                    Destination.PLAYLISTS -> PlaylistScreen()
-                }
+        Button(onClick = {
+            // <-- CAMBIO en la comprobación
+            val locationPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            val audioPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+
+            if (locationPermission == PackageManager.PERMISSION_GRANTED && audioPermission == PackageManager.PERMISSION_GRANTED) {
+                statusText = "Los permisos ya estaban concedidos."
+                statusColor = Color.Blue
+            } else {
+                statusText = "Pidiendo permisos..."
+                statusColor = Color.Gray
+                requestPermissionLauncher.launch(permissions)
             }
+        }) {
+            Text("Pedir Permiso (Ubicación + Micrófono)") // <-- CAMBIO en el texto
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = statusText,
+            color = statusColor,
+            fontSize = 18.sp
+        )
     }
 }
-
-@Preview()
-// [START android_compose_components_navigationbarexample]
-@Composable
-fun NavigationBarExample(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
-    val startDestination = Destination.SONGS
-    var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
-
-    Scaffold(
-        modifier = modifier,
-        bottomBar = {
-            NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
-                Destination.entries.forEachIndexed { index, destination ->
-                    NavigationBarItem(
-                        selected = selectedDestination == index,
-                        onClick = {
-                            navController.navigate(route = destination.route)
-                            selectedDestination = index
-                        },
-                        icon = {
-                            Icon(
-                                destination.icon,
-                                contentDescription = destination.contentDescription
-                            )
-                        },
-                        label = { Text(destination.label) }
-                    )
-                }
-            }
-        }
-    ) { contentPadding ->
-        AppNavHost(navController, startDestination, modifier = Modifier.padding(contentPadding))
-    }
-}
-// [END android_compose_components_navigationbarexample]
-
-@Preview()
-// [START android_compose_components_navigationrailexample]
-@Composable
-fun NavigationRailExample(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
-    val startDestination = Destination.SONGS
-    var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
-
-    Scaffold(modifier = modifier) { contentPadding ->
-        NavigationRail(modifier = Modifier.padding(contentPadding)) {
-            Destination.entries.forEachIndexed { index, destination ->
-                NavigationRailItem(
-                    selected = selectedDestination == index,
-                    onClick = {
-                        navController.navigate(route = destination.route)
-                        selectedDestination = index
-                    },
-                    icon = {
-                        Icon(
-                            destination.icon,
-                            contentDescription = destination.contentDescription
-                        )
-                    },
-                    label = { Text(destination.label) }
-                )
-            }
-        }
-        AppNavHost(navController, startDestination)
-    }
-}
-// [END android_compose_components_navigationrailexample]
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-// [START android_compose_components_navigationtabexample]
-@Composable
-fun NavigationTabExample(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
-    val startDestination = Destination.SONGS
-    var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
-
-    Scaffold(modifier = modifier) { contentPadding ->
-        PrimaryTabRow(selectedTabIndex = selectedDestination, modifier = Modifier.padding(contentPadding)) {
-            Destination.entries.forEachIndexed { index, destination ->
-                Tab(
-                    selected = selectedDestination == index,
-                    onClick = {
-                        navController.navigate(route = destination.route)
-                        selectedDestination = index
-                    },
-                    text = {
-                        Text(
-                            text = destination.label,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                )
-            }
-        }
-        AppNavHost(navController, startDestination)
-    }
-}
-// [END android_compose_components_navigationtabexample]
